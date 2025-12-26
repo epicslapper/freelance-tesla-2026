@@ -1,0 +1,50 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Ignored default folder with query files
+/queries/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ---- Virtual environments ----
+.venv/
+venv/
+env/
+
+# ---- uv ----
+.uv/
+uv.lock
+
+# ---- Streamlit ----
+.streamlit/secrets.toml
+
+# ---- PyCharm ----
+.idea/
+*.iml
+
+# ---- OS files ----
+.DS_Store
+Thumbs.db
+
+# ---- Logs / temp ----
+*.log
+.tmp/
+.cache/
+
+# ---- Jupyter (if ever) ----
+.ipynb_checkpoints/
+
+# ---- Build / distribution ----
+build/
+dist/
+*.egg-info/
