@@ -1,165 +1,296 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="NL Freelancer + Tesla Tax Playground", layout="wide")
+st.set_page_config(page_title="ZZP Tesla Tax Model", layout="wide")
 
-st.title("🇳🇱 Freelancer 2026 – Tesla Model Y Tax Playground")
+st.title("ZZP Tesla – Spreadsheet Style Tax & Cashflow Model")
 
 st.markdown("""
-This tool explores **ballpark outcomes** for a Dutch freelancer using a **Tesla Model Y**
-as a business asset.  
-It focuses on **net cash**, not accounting perfection.
-
-> Assumptions are simplified on purpose.
+This app mirrors the **Excel-style calculation**, step by step.
+All assumptions are explicit.  
+Nothing is hidden. Change inputs at the top and read the story below.
 """)
 
-# =========================
-# INPUT PARAMETERS
-# =========================
-st.header("1️⃣ Input parameters")
+# ======================================================
+# INPUT PARAMETERS (Spreadsheet style)
+# ======================================================
 
-col1, col2, col3 = st.columns(3)
+st.header("1️⃣ Revenue assumptions")
+
+col1, col2 = st.columns(2)
 
 with col1:
-    total_revenue = st.slider("Total revenue (€)", 40_000, 80_000, 75_000, step=1_000)
-    tax_rate = st.number_input("Income tax rate (%)", value=17.8) / 100
-    arbeidskorting = st.number_input("Arbeidskorting (€)", value=3_000)
+    hours_location = st.number_input("Hours on location (hr)", value=600)
+    rate_location = st.number_input("Rate on location (€ / hr)", value=75)
 
 with col2:
-    tesla_price = st.number_input("Tesla Model Y purchase price (€)", value=50_000)
-    vat_recovered = st.number_input("VAT recovered (€)", value=8_678)
-    kia_deduction = st.number_input("KIA deduction (€)", value=14_000)
-    depreciation_years = st.number_input("Depreciation years", value=5)
+    hours_home = st.number_input("Hours home office (hr)", value=600)
+    rate_home = st.number_input("Rate home office (€ / hr)", value=50)
 
-with col3:
-    operational_costs = st.number_input(
-        "Operational car costs per year (€)",
-        value=3_000,
-        help="Charging, insurance, road tax"
-    )
-    interest_rate = st.number_input("IBKR loan interest (%)", value=5.0) / 100
-    bijtelling = st.number_input("Bijtelling (€)", value=7_291)
+revenue_location = hours_location * rate_location
+revenue_home = hours_home * rate_home
+total_revenue = revenue_location + revenue_home
 
-# =========================
-# CALCULATIONS
-# =========================
-tesla_base_cost = tesla_price - vat_recovered
-annual_depreciation = tesla_base_cost / depreciation_years
-interest_cost = tesla_base_cost * interest_rate
+st.subheader("Revenue calculation")
+st.write(f"Revenue on location: €{revenue_location:,.0f}")
+st.write(f"Revenue home office: €{revenue_home:,.0f}")
+st.write(f"**Total Revenue:** €{total_revenue:,.0f}")
 
-total_car_expenses = (
-    annual_depreciation
-    + kia_deduction
-    + operational_costs
-    + interest_cost
-)
+st.divider()
 
-taxable_profit_before_deductions = total_revenue - total_car_expenses + bijtelling
+# ======================================================
+# CAR ASSUMPTIONS
+# ======================================================
 
-zelfstandigenaftrek = 7_280
-startersaftrek = 2_123
-mkb_vrijstelling = 6_067
+st.header("2️⃣ Tesla assumptions")
 
-taxable_profit_after_deductions = max(
-    taxable_profit_before_deductions
-    - zelfstandigenaftrek
-    - startersaftrek
-    - mkb_vrijstelling,
-    0
-)
+col1, col2 = st.columns(2)
 
-tax_before_korting = taxable_profit_after_deductions * tax_rate
-tax_after_korting = max(tax_before_korting - arbeidskorting, 0)
+with col1:
+    tesla_purchase_price = st.number_input("Tesla Model Y purchase (€)", value=50000)
+    vat_recovered = st.number_input("VAT recovered (€)", value=8678)
+    depreciation_years = st.number_input("Depreciation period (years)", value=5)
 
-net_cash = (
-    total_revenue
-    - total_car_expenses
-    - tax_after_korting
-)
+with col2:
+    kia_deduction = st.number_input("KIA deduction (€)", value=14000)
+    operational_costs = st.number_input("Operational costs Tesla (€ / yr)", value=3000)
+    interest_payment = st.number_input("Interest payment IBKR loan (€ / yr)", value=2066)
 
-# =========================
-# RESULTS TABLE
-# =========================
-st.header("2️⃣ Results")
+tesla_base_cost = tesla_purchase_price - vat_recovered
+depreciation = tesla_base_cost / depreciation_years
 
-results = pd.DataFrame({
-    "Metric": [
-        "Total Revenue",
-        "Total Car Expenses",
-        "Taxable Profit (after deductions)",
-        "Income Tax (after arbeidskorting)",
-        "Net Cash"
-    ],
-    "€": [
-        total_revenue,
-        total_car_expenses,
-        taxable_profit_after_deductions,
-        tax_after_korting,
-        net_cash
-    ]
-})
+total_car_expenses = depreciation + kia_deduction + operational_costs
 
-st.dataframe(results.style.format({"€": "€{:,.0f}"}), use_container_width=True)
+st.subheader("Tesla cost breakdown")
+st.write(f"Tesla base cost (ex VAT): €{tesla_base_cost:,.0f}")
+st.write(f"Depreciation per year: €{depreciation:,.0f}")
+st.write(f"KIA deduction: €{kia_deduction:,.0f}")
+st.write(f"Operational costs: €{operational_costs:,.0f}")
+st.write(f"**Total car expenses:** €{total_car_expenses:,.0f}")
 
-# =========================
-# BIG PICTURE NARRATIVE
-# =========================
-st.header("3️⃣ Big picture interpretation")
+st.divider()
+
+# ======================================================
+# BIJTELLING
+# ======================================================
+
+st.header("3️⃣ Private use & bijtelling")
+
+private_km = st.number_input("Private use km", value=6000)
+bijtelling_percentage = st.number_input("Bijtelling % (effective)", value=16.0)
+
+bijtelling_value = tesla_base_cost * (bijtelling_percentage / 100)
+
+st.write(f"Bijtelling (taxable): €{bijtelling_value:,.0f}")
+
+st.divider()
+
+# ======================================================
+# TAXABLE PROFIT
+# ======================================================
+
+st.header("4️⃣ Taxable profit before deductions")
+
+taxable_profit_before = total_revenue - total_car_expenses + bijtelling_value
+
+st.write(f"Revenue: €{total_revenue:,.0f}")
+st.write(f"Minus car expenses: €{total_car_expenses:,.0f}")
+st.write(f"Plus bijtelling: €{bijtelling_value:,.0f}")
+st.write(f"**Taxable profit before deductions:** €{taxable_profit_before:,.0f}")
+
+st.divider()
+
+# ======================================================
+# DEDUCTIONS
+# ======================================================
+
+st.header("5️⃣ Entrepreneur deductions")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    zelfstandigenaftrek = st.number_input("Zelfstandigenaftrek (€)", value=7280)
+    startersaftrek = st.number_input("Startersaftrek (€)", value=2123)
+
+with col2:
+    mkb_vrijstelling = st.number_input("MKB winstvrijstelling (€)", value=6067)
+
+profit_after_deductions = taxable_profit_before - zelfstandigenaftrek - startersaftrek
+taxable_profit_after = profit_after_deductions - mkb_vrijstelling
+
+st.write(f"Profit after zelfstandigenaftrek & startersaftrek: €{profit_after_deductions:,.0f}")
+st.write(f"**Taxable profit after all deductions:** €{taxable_profit_after:,.0f}")
+
+st.divider()
+
+# ======================================================
+# TAX & ARBEIDSKORTING
+# ======================================================
+
+st.header("6️⃣ Income tax & arbeidskorting")
+
+income_tax_rate = st.number_input("Income tax rate (%)", value=17.8)
+arbeidskorting = st.number_input("Arbeidskorting (€)", value=2958)
+
+income_tax_before = taxable_profit_after * (income_tax_rate / 100)
+income_tax_after = max(income_tax_before - arbeidskorting, 0)
+
+st.write(f"Income tax before arbeidskorting: €{income_tax_before:,.0f}")
+st.write(f"Arbeidskorting: €{arbeidskorting:,.0f}")
+st.write(f"**Income tax after arbeidskorting:** €{income_tax_after:,.0f}")
+
+st.divider()
+
+# ======================================================
+# NET CASH
+# ======================================================
+
+st.header("7️⃣ Net cash position")
+
+net_cash_before = total_revenue - total_car_expenses - income_tax_after
+net_cash_final = net_cash_before - operational_costs - interest_payment
+
+st.write(f"Net cash before ops & interest: €{net_cash_before:,.0f}")
+st.write(f"Operational costs: €{operational_costs:,.0f}")
+st.write(f"Interest payments: €{interest_payment:,.0f}")
+
+st.subheader(f"✅ **Final Net Cash: €{net_cash_final:,.0f}**")
+
+st.divider()
+
+# ======================================================
+# NARRATIVE
+# ======================================================
+
+st.header("📘 Big picture summary")
 
 st.markdown(f"""
-### What this shows
-
-- You generate **€{total_revenue:,.0f}** in freelance revenue  
-- The Tesla absorbs a **large chunk of taxable profit** via:
-  - depreciation  
-  - KIA  
-  - interest  
-  - operating costs  
-- **Arbeidskorting bites last**, directly reducing tax payable  
-- Result: **very low effective tax pressure**
-
-### Net outcome
-
-> **Net cash ≈ €{net_cash:,.0f}**
-
-This ignores:
-- AOW income (which stacks on top)
-- Portfolio growth
-- Optional emigration later
-
-This is why the setup works **only in a narrow window**.
+- Revenue is driven by **hours × rate** (location vs home office).
+- The Tesla is financed **without selling assets**, interest is deductible.
+- VAT is recovered upfront, lowering the true capital base.
+- Depreciation + KIA do the heavy lifting early.
+- Bijtelling increases taxable profit but does **not** affect cash.
+- Arbeidskorting is deducted from **tax payable**, not from income.
+- Result: extremely low effective tax pressure and strong net cash.
 """)
 
-# =========================
-# REVENUE SENSITIVITY GRAPH
-# =========================
-st.header("4️⃣ Revenue vs Net Cash")
+st.header("8️⃣ Sanity check table (Excel-style)")
 
-revenues = np.arange(40_000, 80_001, 1_000)
-net_cash_list = []
+sanity_data = {
+    "Item": [
+        "Revenue – location",
+        "Revenue – home office",
+        "Total revenue",
+        "Tesla base cost (ex VAT)",
+        "Depreciation (annual)",
+        "KIA deduction",
+        "Operational costs",
+        "Total car expenses",
+        "Bijtelling (taxable)",
+        "Taxable profit before deductions",
+        "Zelfstandigenaftrek",
+        "Startersaftrek",
+        "MKB winstvrijstelling",
+        "Taxable profit after all deductions",
+        "Income tax after arbeidskorting",
+        "Final net cash"
+    ],
+    "Amount (€)": [
+        revenue_location,
+        revenue_home,
+        total_revenue,
+        tesla_base_cost,
+        depreciation,
+        kia_deduction,
+        operational_costs,
+        total_car_expenses,
+        bijtelling_value,
+        taxable_profit_before,
+        zelfstandigenaftrek,
+        startersaftrek,
+        mkb_vrijstelling,
+        taxable_profit_after,
+        income_tax_after,
+        net_cash_final
+    ]
+}
 
-for r in revenues:
-    tp = r - total_car_expenses + bijtelling
-    tp_after = max(tp - zelfstandigenaftrek - startersaftrek - mkb_vrijstelling, 0)
-    tax = max(tp_after * tax_rate - arbeidskorting, 0)
-    net_cash_list.append(r - total_car_expenses - tax)
+st.dataframe(sanity_data, use_container_width=True)
 
-fig, ax = plt.subplots()
-ax.plot(revenues, net_cash_list)
-ax.set_xlabel("Revenue (€)")
-ax.set_ylabel("Net Cash (€)")
-ax.set_title("Net Cash vs Revenue (Tesla included)")
-ax.grid(True)
 
-st.pyplot(fig)
 
-# =========================
-# FOOTNOTE
-# =========================
-st.caption("""
-⚠️ Not tax advice.  
-Assumes eligibility for all deductions and ignores edge cases.
+st.header("9️⃣ Balance Sheet — BEFORE start of business")
+
+assets_before = {
+    "Cash": 0,
+    "Tesla (business asset)": 0,
+    "VAT receivable": 0
+}
+
+liabilities_before = {
+    "IBKR loan": 0
+}
+
+equity_before = sum(assets_before.values()) - sum(liabilities_before.values())
+
+st.subheader("Assets (Before)")
+st.write(assets_before)
+
+st.subheader("Liabilities (Before)")
+st.write(liabilities_before)
+
+st.subheader(f"Equity (Before): €{equity_before:,.0f}")
+
+
+
+
+st.header("🔟 Balance Sheet — AFTER 1 year")
+
+# Assets
+assets_after = {
+    "Cash": net_cash_final,
+    "Tesla (net book value)": tesla_base_cost - depreciation,
+    "VAT receivable": 0  # already refunded
+}
+
+# Liabilities
+liabilities_after = {
+    "IBKR loan": tesla_base_cost
+}
+
+equity_after = sum(assets_after.values()) - sum(liabilities_after.values())
+
+st.subheader("Assets (After 1 year)")
+st.write(assets_after)
+
+st.subheader("Liabilities (After 1 year)")
+st.write(liabilities_after)
+
+st.subheader(f"Equity (After 1 year): €{equity_after:,.0f}")
+
+
+st.header("📊 Change in financial position (Delta)")
+
+delta_assets = {
+    "Cash increase": assets_after["Cash"] - assets_before["Cash"],
+    "Tesla net value": assets_after["Tesla (net book value)"],
+}
+
+delta_liabilities = {
+    "Loan increase": liabilities_after["IBKR loan"] - liabilities_before["IBKR loan"]
+}
+
+st.subheader("Assets – Change")
+st.write(delta_assets)
+
+st.subheader("Liabilities – Change")
+st.write(delta_liabilities)
+
+st.markdown("""
+### Interpretation
+- The Tesla converts **borrowed money into a depreciating business asset**
+- Cash grows strongly despite:
+  - Bijtelling (non-cash)
+  - Depreciation (non-cash)
+- Equity increases mainly via **retained earnings**
+- This is why buying (not leasing) + IBKR loan is so powerful here
 """)
-
