@@ -1,5 +1,7 @@
 import streamlit as st
 
+import pandas as pd
+
 st.set_page_config(page_title="ZZP Tesla Tax Model", layout="wide")
 
 st.title("ZZP Tesla – Spreadsheet Style Tax & Cashflow Model")
@@ -218,79 +220,83 @@ st.dataframe(sanity_data, use_container_width=True)
 
 
 
-st.header("9️⃣ Balance Sheet — BEFORE start of business")
+bs_before_assets = pd.DataFrame({
+    "Assets": [
+        "Cash",
+        "Investments (IBKR)",
+        "Car",
+        "Total Assets"
+    ],
+    "EUR": [
+        10_000,
+        200_000,
+        0,
+        210_000
+    ]
+})
 
-assets_before = {
-    "Cash": 0,
-    "Tesla (business asset)": 0,
-    "VAT receivable": 0
-}
+bs_before_liabilities = pd.DataFrame({
+    "Liabilities & Equity": [
+        "Loan",
+        "Equity",
+        "Total Liabilities & Equity"
+    ],
+    "EUR": [
+        0,
+        210_000,
+        210_000
+    ]
+})
 
-liabilities_before = {
-    "IBKR loan": 0
-}
+st.subheader("Balance Sheet – BEFORE start")
+col1, col2 = st.columns(2)
 
-equity_before = sum(assets_before.values()) - sum(liabilities_before.values())
+with col1:
+    st.markdown("### Assets")
+    st.table(bs_before_assets)
 
-st.subheader("Assets (Before)")
-st.write(assets_before)
-
-st.subheader("Liabilities (Before)")
-st.write(liabilities_before)
-
-st.subheader(f"Equity (Before): €{equity_before:,.0f}")
-
-
-
-
-st.header("🔟 Balance Sheet — AFTER 1 year")
-
-# Assets
-assets_after = {
-    "Cash": net_cash_final,
-    "Tesla (net book value)": tesla_base_cost - depreciation,
-    "VAT receivable": 0  # already refunded
-}
-
-# Liabilities
-liabilities_after = {
-    "IBKR loan": tesla_base_cost
-}
-
-equity_after = sum(assets_after.values()) - sum(liabilities_after.values())
-
-st.subheader("Assets (After 1 year)")
-st.write(assets_after)
-
-st.subheader("Liabilities (After 1 year)")
-st.write(liabilities_after)
-
-st.subheader(f"Equity (After 1 year): €{equity_after:,.0f}")
+with col2:
+    st.markdown("### Liabilities & Equity")
+    st.table(bs_before_liabilities)
 
 
-st.header("📊 Change in financial position (Delta)")
 
-delta_assets = {
-    "Cash increase": assets_after["Cash"] - assets_before["Cash"],
-    "Tesla net value": assets_after["Tesla (net book value)"],
-}
 
-delta_liabilities = {
-    "Loan increase": liabilities_after["IBKR loan"] - liabilities_before["IBKR loan"]
-}
+bs_after_assets = pd.DataFrame({
+    "Assets": [
+        "Cash",
+        "Tesla Model Y (net book value)",
+        "Investments (IBKR)",
+        "Total Assets"
+    ],
+    "EUR": [
+        72_350,
+        33_058,  # 41,322 – 8,264 depreciation
+        200_000,
+        305_408
+    ]
+})
 
-st.subheader("Assets – Change")
-st.write(delta_assets)
+bs_after_liabilities = pd.DataFrame({
+    "Liabilities & Equity": [
+        "IBKR Loan",
+        "Equity",
+        "Total Liabilities & Equity"
+    ],
+    "EUR": [
+        41_322,
+        264_086,
+        305_408
+    ]
+})
 
-st.subheader("Liabilities – Change")
-st.write(delta_liabilities)
+st.subheader("Balance Sheet – AFTER 1 year")
+col1, col2 = st.columns(2)
 
-st.markdown("""
-### Interpretation
-- The Tesla converts **borrowed money into a depreciating business asset**
-- Cash grows strongly despite:
-  - Bijtelling (non-cash)
-  - Depreciation (non-cash)
-- Equity increases mainly via **retained earnings**
-- This is why buying (not leasing) + IBKR loan is so powerful here
-""")
+with col1:
+    st.markdown("### Assets")
+    st.table(bs_after_assets)
+
+with col2:
+    st.markdown("### Liabilities & Equity")
+    st.table(bs_after_liabilities)
